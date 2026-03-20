@@ -1,0 +1,7 @@
+google-genai          # Gemini Embedding 2 for multimodal embeddings
+networkx              # hypergraph structure
+numpy                 # vector math
+faiss-cpu             # similarity search
+python-dotenv         # loads .env API key
+pillow                # image processing
+openai                # OpenAI-compatible SDK to call Qwen via OpenRouter
