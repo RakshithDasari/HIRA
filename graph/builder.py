@@ -161,7 +161,7 @@ def chunk_document(
 
 
 # =============================================================================
-# STEP 2 — ENTITY + HYPEREDGE EXTRACTION (TODO)
+# STEP 2 — ENTITY + HYPEREDGE EXTRACTION
 # =============================================================================
 def extract_entities(
     chunks: List[str],
@@ -267,21 +267,194 @@ def extract_entities(
     log.info(f"Entities: {len(all_entities)} | Hyperedges: {len(all_hyperedges)}")
     return all_entities, all_hyperedges
 # =============================================================================
-# STEP 3 — ENCODING (TODO)
+# STEP 3 — ENCODING
 # =============================================================================
+def encode_entities(entities: List[Dict]) -> np.ndarray:
+    if not entities:
+        raise ValueError("Cannot encode: entity list is empty.")
+    
+    # name + type for richer semantic representation
+    texts = [f"{e['name']} {e.get('type', '')}" for e in entities]
+    embeddings = encoder.encode_batch(texts)
+    return embeddings.astype(np.float32)
 
-# =============================================================================
-# STEP 4 — BUILD NETWORKX GRAPH (TODO)
-# =============================================================================
 
+def encode_hyperedges(hyperedges: List[Dict]) -> np.ndarray:
+    if not hyperedges:
+        raise ValueError("Cannot encode: hyperedge list is empty.")
+    
+    # encode the full fact sentence
+    texts = [h["fact"] for h in hyperedges]
+    embeddings = encoder.encode_batch(texts)
+    return embeddings.astype(np.float32)
 # =============================================================================
-# STEP 5 — BUILD FAISS INDEXES (TODO)
+# STEP 4 — BUILD NETWORKX GRAPH
 # =============================================================================
+def build_graph(
+    entities: List[Dict],
+    hyperedges: List[Dict]
+) -> nx.Graph:
 
-# =============================================================================
-# STEP 6 — SAVE TO DISK (TODO)
-# =============================================================================
+    G = nx.Graph()
 
+    # add all entity nodes first
+    for e in entities:
+        G.add_node(
+            e["name"],
+            type="entity",
+            entity_id=e["id"],
+            entity_type=e.get("type", "unknown")
+        )
+
+    # add hyperedge nodes + connect to entities
+    entity_name_set = {e["name"] for e in entities}
+    skipped = 0
+
+    for h in hyperedges:
+        # hyperedge ID is its node key in the graph
+        G.add_node(
+            h["id"],
+            type="hyperedge",
+            fact=h["fact"]
+        )
+        # connect hyperedge to every entity it mentions
+        for entity_name in h["connects"]:
+            if entity_name in entity_name_set:
+                G.add_edge(h["id"], entity_name)
+            else:
+                skipped += 1
+                log.warning(f"Skipped: '{entity_name}' not in entity set")
+
+    if skipped:
+        log.warning(f"Total skipped connections: {skipped}")
+
+    log.info(f"Graph: {G.number_of_nodes()} nodes | {G.number_of_edges()} edges")
+    return G
 # =============================================================================
-# MASTER BUILD FUNCTION (TODO)
+# STEP 5 — BUILD FAISS INDEXES
 # =============================================================================
+def build_faiss_indexes(
+    entity_embeddings: np.ndarray,
+    hyperedge_embeddings: np.ndarray
+) -> Tuple[faiss.Index, faiss.Index]:
+
+    # validate inputs are 2D
+    if entity_embeddings.ndim != 2:
+        raise ValueError(f"Expected 2D array, got shape {entity_embeddings.shape}")
+    if hyperedge_embeddings.ndim != 2:
+        raise ValueError(f"Expected 2D array, got shape {hyperedge_embeddings.shape}")
+
+    # validate both come from same encoder — dims must match
+    if entity_embeddings.shape[1] != hyperedge_embeddings.shape[1]:
+        raise ValueError(
+            f"Dimension mismatch: {entity_embeddings.shape[1]} vs "
+            f"{hyperedge_embeddings.shape[1]}"
+        )
+
+    dim = entity_embeddings.shape[1]
+
+    # IndexFlatIP = exact search using inner product (cosine similarity)
+    # row 0 in index = entities[0], row 1 = entities[1], order must never change
+    index_entity = faiss.IndexFlatIP(dim)
+    index_entity.add(entity_embeddings)
+
+    index_hyperedge = faiss.IndexFlatIP(dim)
+    index_hyperedge.add(hyperedge_embeddings)
+
+    log.info(f"FAISS entity index: {index_entity.ntotal} vectors")
+    log.info(f"FAISS hyperedge index: {index_hyperedge.ntotal} vectors")
+    return index_entity, index_hyperedge
+# =============================================================================
+# STEP 6 — SAVE TO DISK
+# =============================================================================
+def save(
+    G: nx.Graph,
+    index_entity: faiss.Index,
+    index_hyperedge: faiss.Index,
+    entities: List[Dict],
+    hyperedges: List[Dict],
+    save_dir: str = "artifacts"
+) -> None:
+
+    os.makedirs(save_dir, exist_ok=True)
+
+    # save FAISS indexes in binary format
+    faiss.write_index(index_entity,
+        os.path.join(save_dir, "index_entity.bin"))
+    faiss.write_index(index_hyperedge,
+        os.path.join(save_dir, "index_hyperedge.bin"))
+
+    # save metadata — maps integer ID → node content
+    metadata = {
+        "entities": entities,
+        "hyperedges": hyperedges,
+        "entity_count": len(entities),
+        "hyperedge_count": len(hyperedges)
+    }
+    with open(os.path.join(save_dir, "metadata.json"), "w", encoding="utf-8") as f:
+        json.dump(metadata, f, indent=2, ensure_ascii=False)
+
+    # save NetworkX graph — pickle format
+    # nx.write_gpickle deprecated in 3.x — use pickle directly
+    with open(os.path.join(save_dir, "graph.gpickle"), "wb") as f:
+        pickle.dump(G, f, protocol=pickle.HIGHEST_PROTOCOL)
+
+    log.info(f"Saved to: {os.path.abspath(save_dir)}/")
+    log.info(f"  index_entity.bin ({index_entity.ntotal} vectors)")
+    log.info(f"  index_hyperedge.bin ({index_hyperedge.ntotal} vectors)")
+    log.info(f"  metadata.json ({len(entities)} entities, {len(hyperedges)} hyperedges)")
+    log.info(f"  graph.gpickle ({G.number_of_nodes()} nodes, {G.number_of_edges()} edges)")
+# =============================================================================
+# MASTER BUILD FUNCTION
+# =============================================================================
+def build(input_path: str, save_dir: str = "artifacts") -> None:
+    """
+    End-to-end pipeline. Only function main.py ever calls.
+    """
+    log.info("=" * 50)
+    log.info("Starting hypergraph build pipeline")
+    log.info(f"Input: {input_path}")
+    log.info("=" * 50)
+
+    try:
+        log.info("[Step 1/6] Chunking document...")
+        chunks, image_paths = chunk_document(input_path)
+
+        log.info("[Step 2/6] Extracting entities and hyperedges...")
+        entities, hyperedges = extract_entities(chunks, image_paths)
+
+        log.info("[Step 3/6] Encoding entities and hyperedges...")
+        entity_embeddings = encode_entities(entities)
+        hyperedge_embeddings = encode_hyperedges(hyperedges)
+
+        log.info("[Step 4/6] Building NetworkX graph...")
+        G = build_graph(entities, hyperedges)
+
+        log.info("[Step 5/6] Building FAISS indexes...")
+        index_e, index_h = build_faiss_indexes(
+            entity_embeddings,
+            hyperedge_embeddings
+        )
+
+        log.info("[Step 6/6] Saving artifacts to disk...")
+        save(G, index_e, index_h, entities, hyperedges, save_dir)
+
+        log.info("=" * 50)
+        log.info("Build complete.")
+        log.info(f"  Entities:   {len(entities)}")
+        log.info(f"  Hyperedges: {len(hyperedges)}")
+        log.info(f"  Artifacts:  {os.path.abspath(save_dir)}/")
+        log.info("=" * 50)
+
+    except NotImplementedError as e:
+        log.error(f"Not implemented: {e}")
+        raise
+    except FileNotFoundError as e:
+        log.error(f"File not found: {e}")
+        raise
+    except ValueError as e:
+        log.error(f"Bad data: {e}")
+        raise
+    except Exception as e:
+        log.error(f"Build failed at: {type(e).__name__}: {e}")
+        raise
