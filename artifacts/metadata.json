@@ -1,0 +1,236 @@
+{
+  "entities": [
+    {
+      "id": "e_0",
+      "name": "The Big Bang Theory",
+      "type": "concept"
+    },
+    {
+      "id": "e_1",
+      "name": "Leonard Hofstadter",
+      "type": "person"
+    },
+    {
+      "id": "e_2",
+      "name": "Sheldon Cooper",
+      "type": "person"
+    },
+    {
+      "id": "e_3",
+      "name": "Penny",
+      "type": "person"
+    },
+    {
+      "id": "e_4",
+      "name": "Howard Wolowitz",
+      "type": "person"
+    },
+    {
+      "id": "e_5",
+      "name": "Raj Koothrappali",
+      "type": "person"
+    },
+    {
+      "id": "e_6",
+      "name": "Amy Farrah Fowler",
+      "type": "person"
+    },
+    {
+      "id": "e_7",
+      "name": "Caltech",
+      "type": "place"
+    },
+    {
+      "id": "e_8",
+      "name": "aerospace engineering",
+      "type": "concept"
+    },
+    {
+      "id": "e_9",
+      "name": "astrophysics",
+      "type": "concept"
+    },
+    {
+      "id": "e_10",
+      "name": "family",
+      "type": "concept"
+    },
+    {
+      "id": "e_11",
+      "name": "identity",
+      "type": "concept"
+    },
+    {
+      "id": "e_12",
+      "name": "scientific achievements",
+      "type": "concept"
+    },
+    {
+      "id": "e_13",
+      "name": "friendship",
+      "type": "concept"
+    },
+    {
+      "id": "e_14",
+      "name": "emotional growth",
+      "type": "concept"
+    },
+    {
+      "id": "e_15",
+      "name": "Bang Theory",
+      "type": "concept"
+    },
+    {
+      "id": "e_16",
+      "name": "jokes per minute",
+      "type": "concept"
+    },
+    {
+      "id": "e_17",
+      "name": "closure",
+      "type": "concept"
+    },
+    {
+      "id": "e_18",
+      "name": "friendships",
+      "type": "concept"
+    },
+    {
+      "id": "e_19",
+      "name": "intelligence alone",
+      "type": "concept"
+    },
+    {
+      "id": "e_20",
+      "name": "relationships",
+      "type": "concept"
+    }
+  ],
+  "hyperedges": [
+    {
+      "id": "h_0",
+      "fact": "Leonard Hofstadter and Sheldon Cooper work as physicists at Caltech.",
+      "connects": [
+        "Leonard Hofstadter",
+        "Sheldon Cooper",
+        "Caltech"
+      ]
+    },
+    {
+      "id": "h_1",
+      "fact": "Penny moves in across the hall from Leonard Hofstadter and Sheldon Cooper.",
+      "connects": [
+        "Penny",
+        "Leonard Hofstadter",
+        "Sheldon Cooper"
+      ]
+    },
+    {
+      "id": "h_2",
+      "fact": "Howard Wolowitz works as an aerospace engineer.",
+      "connects": [
+        "Howard Wolowitz",
+        "aerospace engineering"
+      ]
+    },
+    {
+      "id": "h_3",
+      "fact": "Raj Koothrappali is an astrophysicist who initially struggles to talk to women.",
+      "connects": [
+        "Raj Koothrappali",
+        "astrophysics"
+      ]
+    },
+    {
+      "id": "h_4",
+      "fact": "Sheldon Cooper builds a meaningful relationship with Amy Farrah Fowler.",
+      "connects": [
+        "Sheldon Cooper",
+        "Amy Farrah Fowler"
+      ]
+    },
+    {
+      "id": "h_5",
+      "fact": "Leonard Hofstadter and Penny develop a long-term romantic bond that matures into marriage.",
+      "connects": [
+        "Leonard Hofstadter",
+        "Penny"
+      ]
+    },
+    {
+      "id": "h_6",
+      "fact": "Howard Wolowitz grows from an immature flirtatious character into a responsible husband and father.",
+      "connects": [
+        "Howard Wolowitz",
+        "family"
+      ]
+    },
+    {
+      "id": "h_7",
+      "fact": "Raj Koothrappali's journey reflects struggles with confidence and identity in social and romantic contexts.",
+      "connects": [
+        "Raj Koothrappali",
+        "identity"
+      ]
+    },
+    {
+      "id": "h_8",
+      "fact": "The Big Bang Theory incorporates real scientific achievements and milestones into its storyline.",
+      "connects": [
+        "The Big Bang Theory",
+        "scientific achievements"
+      ]
+    },
+    {
+      "id": "h_9",
+      "fact": "In its final seasons, The Big Bang Theory focuses more on closure, friendships, and emotional growth than on jokes per minute.",
+      "connects": [
+        "The Big Bang Theory",
+        "friendship",
+        "emotional growth"
+      ]
+    },
+    {
+      "id": "h_10",
+      "fact": "Bang Theory becomes less about jokes per minute.",
+      "connects": [
+        "Bang Theory",
+        "jokes per minute"
+      ]
+    },
+    {
+      "id": "h_11",
+      "fact": "Bang Theory becomes more about closure.",
+      "connects": [
+        "Bang Theory",
+        "closure"
+      ]
+    },
+    {
+      "id": "h_12",
+      "fact": "Bang Theory becomes more about friendships.",
+      "connects": [
+        "Bang Theory",
+        "friendships"
+      ]
+    },
+    {
+      "id": "h_13",
+      "fact": "Bang Theory becomes more about intelligence alone.",
+      "connects": [
+        "Bang Theory",
+        "intelligence alone"
+      ]
+    },
+    {
+      "id": "h_14",
+      "fact": "Emotional growth and relationships matter just as much.",
+      "connects": [
+        "emotional growth",
+        "relationships"
+      ]
+    }
+  ],
+  "entity_count": 21,
+  "hyperedge_count": 15
+}

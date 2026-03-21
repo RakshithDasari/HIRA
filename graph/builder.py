@@ -184,7 +184,7 @@ def extract_entities(
 
         # call Qwen with extraction prompt
         response = qwen.chat.completions.create(
-            model="qwen/qwen3-30b-a3b:free",
+            model="nvidia/nemotron-3-super-120b-a12b:free",
             messages=[
                 {
                     "role": "system",
@@ -233,7 +233,7 @@ def extract_entities(
     # handle images — each image is one entity + one hyperedge
     for img_path in image_paths:
         response = qwen.chat.completions.create(
-            model="qwen/qwen3-30b-a3b:free",
+            model="nvidia/nemotron-3-super-120b-a12b:free",
             messages=[
                 {
                     "role": "user",

@@ -59,7 +59,7 @@ class Controller:
         )
 
         response = qwen.chat.completions.create(
-            model="qwen/qwen3-30b-a3b:free",
+            model="nvidia/nemotron-3-super-120b-a12b:free",
             messages=[
                 {
                     "role": "system",
