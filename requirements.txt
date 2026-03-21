@@ -5,3 +5,4 @@ faiss-cpu             # similarity search
 python-dotenv         # loads .env API key
 pillow                # image processing
 openai                # OpenAI-compatible SDK to call Qwen via OpenRouter
+pymupdf               # fitz — PDF text and image extraction
