@@ -163,7 +163,109 @@ def chunk_document(
 # =============================================================================
 # STEP 2 — ENTITY + HYPEREDGE EXTRACTION (TODO)
 # =============================================================================
+def extract_entities(
+    chunks: List[str],
+    image_paths: List[str]
+) -> Tuple[List[Dict], List[Dict]]:
 
+    all_entities: List[Dict] = []
+    all_hyperedges: List[Dict] = []
+
+    # track seen names to avoid duplicates across chunks
+    seen_entity_names: set = set()
+    seen_hyperedge_facts: set = set()
+
+    entity_counter = 0
+    hyperedge_counter = 0
+
+    for i, chunk in enumerate(chunks):
+        if not chunk.strip():
+            continue
+
+        # call Qwen with extraction prompt
+        response = qwen.chat.completions.create(
+            model="qwen/qwen3-30b-a3b:free",
+            messages=[
+                {
+                    "role": "system",
+                    "content": "You are a knowledge graph builder. Return only valid JSON."
+                },
+                {
+                    "role": "user",
+                    "content": EXTRACTION_PROMPT.format(chunk=chunk)
+                }
+            ]
+        )
+
+        raw = response.choices[0].message.content
+
+        # defensive parse — never trust LLM output directly
+        try:
+            parsed = parse_llm_response(raw)
+        except ValueError as e:
+            log.warning(f"Chunk {i+1} parse failed, skipping: {e}")
+            continue
+
+        # process entities
+        for e in parsed.get("entities", []):
+            if e["name"] not in seen_entity_names:
+                all_entities.append({
+                    "id": f"e_{entity_counter}",
+                    "name": e["name"],
+                    "type": e.get("type", "concept")
+                })
+                seen_entity_names.add(e["name"])
+                entity_counter += 1
+
+        # process hyperedges
+        for h in parsed.get("hyperedges", []):
+            if h["fact"] not in seen_hyperedge_facts:
+                all_hyperedges.append({
+                    "id": f"h_{hyperedge_counter}",
+                    "fact": h["fact"],
+                    "connects": h["connects"]
+                })
+                seen_hyperedge_facts.add(h["fact"])
+                hyperedge_counter += 1
+
+        log.info(f"Chunk {i+1}/{len(chunks)} extracted")
+
+    # handle images — each image is one entity + one hyperedge
+    for img_path in image_paths:
+        response = qwen.chat.completions.create(
+            model="qwen/qwen3-30b-a3b:free",
+            messages=[
+                {
+                    "role": "user",
+                    "content": f"Describe this image and list the key concepts it represents. Return a single sentence description only.\nImage path: {img_path}"
+                }
+            ]
+        )
+        description = response.choices[0].message.content.strip()
+
+        # image itself becomes an entity node
+        all_entities.append({
+            "id": f"e_{entity_counter}",
+            "name": img_path,
+            "type": "image"
+        })
+        entity_counter += 1
+
+        # image description becomes a hyperedge
+        all_hyperedges.append({
+            "id": f"h_{hyperedge_counter}",
+            "fact": description,
+            "connects": [img_path]
+        })
+        hyperedge_counter += 1
+
+    if not all_entities:
+        raise ValueError("Extraction produced 0 entities. Check LLM prompt or input.")
+    if not all_hyperedges:
+        raise ValueError("Extraction produced 0 hyperedges. Check LLM prompt or input.")
+
+    log.info(f"Entities: {len(all_entities)} | Hyperedges: {len(all_hyperedges)}")
+    return all_entities, all_hyperedges
 # =============================================================================
 # STEP 3 — ENCODING (TODO)
 # =============================================================================
