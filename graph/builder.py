@@ -27,7 +27,9 @@ log = logging.getLogger(__name__)
 encoder = GeminiEncoder()
 qwen = OpenAI(
     base_url="https://openrouter.ai/api/v1",
-    api_key=os.getenv("OPENROUTER_API_KEY")
+    api_key=os.getenv("OPENROUTER_API_KEY"),
+    timeout=90.0,
+    max_retries=2,
 )
 
 # =============================================================================
@@ -186,19 +188,23 @@ def extract_entities(
             continue
 
         # call Qwen with extraction prompt
-        response = qwen.chat.completions.create(
-            model="nvidia/nemotron-3-super-120b-a12b:free",
-            messages=[
-                {
-                    "role": "system",
-                    "content": "You are a knowledge graph builder. Return only valid JSON."
-                },
-                {
-                    "role": "user",
-                    "content": EXTRACTION_PROMPT.format(chunk=chunk)
-                }
-            ]
-        )
+        try:
+            response = qwen.chat.completions.create(
+                model="nvidia/nemotron-3-super-120b-a12b:free",
+                messages=[
+                    {
+                        "role": "system",
+                        "content": "You are a knowledge graph builder. Return only valid JSON."
+                    },
+                    {
+                        "role": "user",
+                        "content": EXTRACTION_PROMPT.format(chunk=chunk)
+                    }
+                ]
+            )
+        except Exception as e:
+            log.warning(f"Chunk {i+1} request failed, skipping: {type(e).__name__}: {e}")
+            continue
 
         raw = response.choices[0].message.content
 
@@ -243,15 +249,19 @@ def extract_entities(
 
     # handle images — each image is one entity + one hyperedge
     for img_path in image_paths:
-        response = qwen.chat.completions.create(
-            model="nvidia/nemotron-3-super-120b-a12b:free",
-            messages=[
-                {
-                    "role": "user",
-                    "content": f"Describe this image and list the key concepts it represents. Return a single sentence description only.\nImage path: {img_path}"
-                }
-            ]
-        )
+        try:
+            response = qwen.chat.completions.create(
+                model="nvidia/nemotron-3-super-120b-a12b:free",
+                messages=[
+                    {
+                        "role": "user",
+                        "content": f"Describe this image and list the key concepts it represents. Return a single sentence description only.\nImage path: {img_path}"
+                    }
+                ]
+            )
+        except Exception as e:
+            log.warning(f"Image extraction failed for {img_path}: {type(e).__name__}: {e}")
+            continue
         description = response.choices[0].message.content.strip()
 
         # image itself becomes an entity node
