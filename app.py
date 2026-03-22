@@ -1,5 +1,5 @@
 import streamlit as st
-import os, sys, json, time, pickle, tempfile
+import os, sys, json, pickle, tempfile
 
 st.set_page_config(page_title="HIRA", page_icon="◈", layout="wide", initial_sidebar_state="expanded")
 
@@ -345,16 +345,14 @@ elif st.session_state.mode=="build":
                 if st.button("⊕  Build knowledge base",use_container_width=True,key="bb"):
                     sp=f"data/sample/{up.name}"; os.makedirs("data/sample",exist_ok=True)
                     with open(sp,"wb") as f: f.write(up.getbuffer())
-                    steps=["Reading and chunking document","Extracting entities and hyperedges","Encoding with embedding model","Building NetworkX hypergraph","Indexing with FAISS","Saving artifacts to disk"]
-                    prog=st.progress(0); ph=st.empty()
-                    def rs(ai):
-                        h="".join([f'<div class="step {"done" if j<ai else "act" if j==ai else ""}"><div class="sdot"></div>{"✓ " if j<ai else "→ " if j==ai else ""}{s}</div>' for j,s in enumerate(steps)])
-                        ph.markdown(h,unsafe_allow_html=True)
+                    st.info("Running build pipeline. Live step logs are printed in the terminal.")
+                    prog=st.progress(0)
                     try:
                         sys.path.insert(0,os.getcwd())
                         from graph.builder import build
-                        for i in range(len(steps)): rs(i); prog.progress((i+1)/len(steps)); time.sleep(0.25)
-                        build(sp); rs(len(steps)); prog.progress(1.0)
+                        prog.progress(0.1)
+                        build(sp)
+                        prog.progress(1.0)
                         st.session_state.artifacts_exist=True; st.success("Knowledge base built."); st.rerun()
                     except Exception as e: st.error(f"Build failed: {e}")
     with col2:
@@ -383,7 +381,7 @@ elif st.session_state.mode=="update":
                     if st.button("↺  Update knowledge base",use_container_width=True,key="ub"):
                         sp=f"data/sample/{up.name}"; os.makedirs("data/sample",exist_ok=True)
                         with open(sp,"wb") as f: f.write(up.getbuffer())
-                        with st.spinner("Computing diff..."):
+                        with st.spinner("Running update pipeline (extract, diff, encode, save)..."):
                             try:
                                 sys.path.insert(0,os.getcwd())
                                 from graph.updater import Updater
