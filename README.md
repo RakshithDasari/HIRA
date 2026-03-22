@@ -3,7 +3,7 @@
 
 <br>
 
-![System Architecture](docs/architecture_images/system_architecture.png)
+![System Architecture](system_architecture.png)
 
 <br>
 
@@ -37,16 +37,6 @@ HIRA/
   main.py           — CLI entry point (build / query / update)
   app.py            — Streamlit web interface
 ```
-
-### Component diagrams
-
-| Module | Diagram |
-|---|---|
-| encoder.py | ![](docs/architecture/encoder.png) |
-| builder.py | ![](docs/architecture/builder.png) |
-| retriever.py | ![](docs/architecture/retriever.png) |
-| controller.py | ![](docs/architecture/controller.png) |
-| updater.py | ![](docs/architecture/updater.png) |
 
 ---
 
@@ -83,6 +73,12 @@ Create a `.env` file in the project root:
 GEMINI_API_KEY=your_gemini_key
 OPENROUTER_API_KEY=your_openrouter_key
 ```
+
+---
+
+## Docker
+
+> **TODO:** Add Docker setup and deployment instructions here.
 
 ---
 
