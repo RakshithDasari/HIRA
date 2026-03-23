@@ -28,15 +28,15 @@ encoder = GeminiEncoder()
 
 class Updater:
     """
-        Incrementally updates existing artifacts with new documents or images.
+    Incrementally updates existing artifacts with new documents or images.
     Only adds genuinely new entities and hyperedges — never rebuilds.
-        React virtual DOM pattern applied to knowledge graphs.
+    React virtual DOM pattern applied to knowledge graphs.
     Fixes Graph-R1's static hypergraph limitation.
 
-        Supports three update modes:
-            1. Document only  — update("doc.txt")
-            2. Document + images — update("doc.txt", image_paths=["img1.png"])
-            3. Images only    — update(image_paths=["img1.png", "img2.png"])
+    Supports three update modes:
+      1. Document only  — update("doc.txt")
+      2. Document + images — update("doc.txt", image_paths=["img1.png"])
+      3. Images only    — update(image_paths=["img1.png", "img2.png"])
     """
 
     def __init__(self, artifacts_dir: str = "artifacts"):
@@ -128,7 +128,6 @@ class Updater:
         """
         Appends new nodes and edges to existing NetworkX graph.
         """
-        # combined set for edge validation
         entity_name_set = {e["name"] for e in self.entities + fresh_entities}
 
         for e in fresh_entities:
@@ -254,7 +253,6 @@ class Updater:
             new_hyperedges
         )
 
-        # nothing new — exit early
         if not fresh_entities and not fresh_hyperedges:
             log.info("No new knowledge found — artifacts unchanged")
             return {"added_entities": 0, "added_hyperedges": 0}
@@ -280,6 +278,7 @@ class Updater:
             f"+{len(fresh_hyperedges)} hyperedges"
         )
         log.info("=" * 50)
+
         return {
             "added_entities": len(fresh_entities),
             "added_hyperedges": len(fresh_hyperedges)

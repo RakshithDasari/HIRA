@@ -648,9 +648,24 @@ elif st.session_state.mode=="update":
                     sys.path.insert(0, os.getcwd())
                     from graph.updater import Updater
 
-                    # pass first saved path (doc or image) to updater
-                    primary_path = saved_paths[0] if saved_paths else None
-                    r = Updater().update(primary_path)
+                    # build image paths list from uploaded images
+                    img_path_list = [f"data/sample/{img.name}" for img in imgs] if imgs else []
+
+                    if has_doc:
+                        doc_path = f"data/sample/{up.name}"
+                        # document + optional images
+                        r = Updater().update(
+                            input_path=doc_path,
+                            image_paths=img_path_list
+                        )
+                    else:
+                        # images only — updater.py now handles this cleanly
+                        # passes empty chunks=[] to extract_entities with image_paths
+                        # no stub files, no hacks
+                        r = Updater().update(
+                            input_path=None,
+                            image_paths=img_path_list
+                        )
 
                     print("[HIRA UPDATE] Updater().update() returned")
                     print(f"[HIRA UPDATE] Step 4/5 — encoded {r['added_entities']} new entities")

@@ -354,6 +354,11 @@
       "id": "e_41",
       "name": "Long Night",
       "type": "event"
+    },
+    {
+      "id": "e_0",
+      "name": "data/sample/Screenshot 2026-03-22 185335.png",
+      "type": "image"
     }
   ],
   "hyperedges": [
@@ -767,8 +772,15 @@
         "Power and Corruption",
         "Honor vs Survival"
       ]
+    },
+    {
+      "id": "h_0",
+      "fact": "I am unable toview the image, so I cannot provide a description or list of key concepts.",
+      "connects": [
+        "data/sample/Screenshot 2026-03-22 185335.png"
+      ]
     }
   ],
-  "entity_count": 71,
-  "hyperedge_count": 50
+  "entity_count": 72,
+  "hyperedge_count": 51
 }
